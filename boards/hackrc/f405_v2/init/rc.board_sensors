@@ -1,0 +1,21 @@
+#!/bin/sh
+#
+# HAKRC F405 V2 board sensors initialization
+#---------------------------------------------
+
+board_adc start
+
+# --- IMU: ICM42688 on SPI1 ---
+if ! icm42688 -R 6 -s start
+then
+	echo "ICM42688 not detected on SPI1"
+fi
+
+# --- Barometer: BMP280 on SPI3 ---
+if ! bmp280 -s start
+then
+	echo "BMP280 not detected on SPI3"
+fi
+
+# --- OSD (optional, handled by PX4 driver) ---
+# max7456 start  # only if you need to force OSD init manually

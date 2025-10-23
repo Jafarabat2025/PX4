@@ -152,58 +152,73 @@ __EXPORT void board_on_reset(int status)
  *
  ************************************************************************************/
 
-__EXPORT void
-stm32_boardinitialize(void)
+__EXPORT void stm32_boardinitialize(void)
 {
-	/* Reset all PWM to Low outputs */
-
+	/*───────────────────────────────
+	 * Reset all PWM outputs to LOW
+	 *───────────────────────────────*/
 	board_on_reset(-1);
 
-	/* configure LEDs */
+	/*───────────────────────────────
+	 * LEDs
+	 *───────────────────────────────*/
 	board_autoled_initialize();
 
-
-	/* configure ADC pins */
+	/*───────────────────────────────
+	 * ADC inputs
+	 *───────────────────────────────*/
 	stm32_configgpio(GPIO_ADC1_IN11);	/* BATT_VOLTAGE_SENS */
 	stm32_configgpio(GPIO_ADC1_IN12);	/* BATT_CURRENT_SENS */
-	//stm32_configgpio(GPIO_ADC1_IN0);	/* RSSI analog in (TX of UART4 instead) */
 
-	// TODO: power peripherals
-	///* configure power supply control/sense pins */
-	//stm32_configgpio(GPIO_PERIPH_3V3_EN);
-	//stm32_configgpio(GPIO_VDD_BRICK_VALID);
-	//stm32_configgpio(GPIO_VDD_USB_VALID);
+	/*───────────────────────────────
+	 * Power rails
+	 *───────────────────────────────*/
+	// включаем 3.3В для сенсоров, если линия определена
+// #ifdef GPIO_VDD_3V3_SENSORS_EN
+// 	stm32_configgpio(GPIO_VDD_3V3_SENSORS_EN);
+// 	stm32_gpiowrite(GPIO_VDD_3V3_SENSORS_EN, true);
+// 	up_mdelay(10);
+// #endif
 
-	// TODO: 3v3 Sensor?
-	///* Start with Sensor voltage off We will enable it
-	// * in board_app_initialize
-	// */
-	//stm32_configgpio(GPIO_VDD_3V3_SENSORS_EN);
+	/*───────────────────────────────
+	 * SPI1 — IMU (ICM42688P)
+	 *───────────────────────────────*/
+	stm32_configgpio(GPIO_SPI1_SCK);    // PA5
+	stm32_configgpio(GPIO_SPI1_MISO);   // PA6
+	stm32_configgpio(GPIO_SPI1_MOSI);   // PA7
+	stm32_configgpio(GPIO_SPI1_NSS);    // PA4
+	stm32_gpiowrite(GPIO_SPI1_NSS, true);
 
-	// TODO: SBUS inversion? SPEK power?
-	//stm32_configgpio(GPIO_SBUS_INV);
-	//stm32_configgpio(GPIO_SPEKTRUM_PWR_EN);
+	/*───────────────────────────────
+	 * SPI2 — Flash (W25Qxx)
+	 *───────────────────────────────*/
+	stm32_configgpio(GPIO_SPI2_SCK);    // PB13
+	stm32_configgpio(GPIO_SPI2_MISO);   // PB14
+	stm32_configgpio(GPIO_SPI2_MOSI);   // PC3
+	stm32_configgpio(GPIO_SPI2_NSS);    // PB12
+	stm32_gpiowrite(GPIO_SPI2_NSS, true);
 
-	// TODO: $$$ Unused?
-	//stm32_configgpio(GPIO_8266_GPIO0);
-	//stm32_configgpio(GPIO_8266_PD);
-	//stm32_configgpio(GPIO_8266_RST);
+	/*───────────────────────────────
+	 * SPI3 — OSD (AT7456E) / DPS310 (если SPI)
+	 *───────────────────────────────*/
+	stm32_configgpio(GPIO_SPI3_SCK);    // PC10
+	stm32_configgpio(GPIO_SPI3_MISO);   // PC11
+	stm32_configgpio(GPIO_SPI3_MOSI);   // PB5
+	stm32_configgpio(GPIO_SPI3_NSS);    // PA15
+	stm32_gpiowrite(GPIO_SPI3_NSS, true);
 
-	/* Safety - led don in led driver */
+	/*───────────────────────────────
+	 * I2C1 — Barometer (DPS310)
+	 *───────────────────────────────*/
+	stm32_configgpio(GPIO_I2C1_SCL);    // PB8
+	stm32_configgpio(GPIO_I2C1_SDA);    // PB9
 
-	// TODO: unused?
-	//stm32_configgpio(GPIO_BTN_SAFETY);
-
-	// TODO: RSSI
-	//stm32_configgpio(GPIO_RSSI_IN);
-
-	//stm32_configgpio(GPIO_PPM_IN);
-
-	/* configure SPI all interfaces GPIO */
-
+	/*───────────────────────────────
+	 * Initialize SPI peripheral drivers
+	 *───────────────────────────────*/
 	stm32_spiinitialize();
-
 }
+
 
 /****************************************************************************
  * Name: board_app_initialize
@@ -229,99 +244,110 @@ stm32_boardinitialize(void)
  *   any failure to indicate the nature of the failure.
  *
  ****************************************************************************/
-
+#define CONFIG_SPI_CHARDEV
+extern int spi_register(int bus, FAR struct spi_dev_s *dev);
 static struct spi_dev_s *spi1;
 static struct spi_dev_s *spi2;
 static struct spi_dev_s *spi3;
 
 __EXPORT int board_app_initialize(uintptr_t arg)
 {
-	px4_platform_init();
+    syslog(LOG_INFO, "[boot] board_app_initialize() starting...\n");
 
-	/* Configure the DMA allocator */
-	if (board_dma_alloc_init() < 0) {
-		syslog(LOG_ERR, "DMA alloc FAILED\n");
-	}
+    px4_platform_init();
+
+    /* DMA allocator */
+    if (board_dma_alloc_init() < 0) {
+        syslog(LOG_ERR, "[boot] DMA alloc FAILED\n");
+    }
 
 #if defined(SERIAL_HAVE_RXDMA)
-	// Poll RX DMA every 1 ms for buffered bytes.
-	static struct hrt_call serial_dma_call;
-	hrt_call_every(&serial_dma_call, 1000, 1000,
-		       (hrt_callout)stm32_serial_dma_poll, NULL);
+    static struct hrt_call serial_dma_call;
+    hrt_call_every(&serial_dma_call, 1000, 1000,
+                   (hrt_callout)stm32_serial_dma_poll, NULL);
 #endif
 
-	/* Initial LED state */
-	drv_led_start();
-	led_off(LED_BLUE);
+    /* LED setup */
+    drv_led_start();
+    led_off(LED_BLUE);
 
-	if (board_hardfault_init(2, true) != 0) {
-		led_on(LED_BLUE);
-	}
+    if (board_hardfault_init(2, true) != 0) {
+        led_on(LED_BLUE);
+    }
 
-	/*─────────────────────────────────────────────
-	 * SPI1 — IMU (ICM42688)
-	 *────────────────────────────────────────────*/
-	spi1 = px4_spibus_initialize(1);
-	if (!spi1) {
-		syslog(LOG_ERR, "[boot] FAILED to initialize SPI1 (IMU)\n");
-		led_on(LED_BLUE);
-	}
-	SPI_SETFREQUENCY(spi1, 10 * 1000 * 1000);   // 10 MHz
-	SPI_SETBITS(spi1, 8);
-	SPI_SETMODE(spi1, SPIDEV_MODE3);
-	up_udelay(20);
+    /* Enable 3V3 sensors power if defined */
+#ifdef GPIO_VDD_3V3_SENSORS_EN
+    stm32_configgpio(GPIO_VDD_3V3_SENSORS_EN);
+    stm32_gpiowrite(GPIO_VDD_3V3_SENSORS_EN, true);
+    up_mdelay(10);
+#endif
 
-	/*─────────────────────────────────────────────
-	 * SPI2 — External Flash (W25Q32 / GD25Q64)
-	 *────────────────────────────────────────────*/
-	spi2 = px4_spibus_initialize(2);
-	if (!spi2) {
-    		syslog(LOG_ERR, "[boot] FAILED to initialize SPI2 (Flash)\n");
-    		led_on(LED_BLUE);
-	}
-	SPI_SETFREQUENCY(spi2, 12 * 1000 * 1000);
-	SPI_SETBITS(spi2, 8);
-	SPI_SETMODE(spi2, SPIDEV_MODE0);
-	SPI_SELECT(spi2, SPIDEV_FLASH(0), false);
-	up_udelay(20);
-	// int result = px4_spibus_initialize(2);
-	// if (result != OK) {
-    	// 	syslog(LOG_ERR, "[boot] FAILED to bind SPI2 to flash driver (%d)\n", result);
-    	// 	led_on(LED_BLUE);
-	// }
+    /*─────────────────────────────────────────────
+     * SPI1 — IMU (ICM42688)
+     *────────────────────────────────────────────*/
+    spi1 = stm32_spibus_initialize(1);
+    if (!spi1) {
+        syslog(LOG_ERR, "[boot] FAILED to initialize SPI1 (IMU)\n");
+    } else {
+        SPI_SETFREQUENCY(spi1, 8 * 1000 * 1000);
+        SPI_SETBITS(spi1, 8);
+        SPI_SETMODE(spi1, SPIDEV_MODE3);
+#ifdef CONFIG_SPI_CHARDEV
+        spi_register(1, spi1);
+#endif
+        syslog(LOG_INFO, "[boot] SPI1 initialized\n");
+    }
 
-	/*─────────────────────────────────────────────
-	 * SPI3 — OSD (MAX7456) / Barometer
-	 *────────────────────────────────────────────*/
-	spi3 = px4_spibus_initialize(3);
-	if (!spi3) {
-		syslog(LOG_ERR, "[boot] FAILED to initialize SPI3\n");
-		led_on(LED_BLUE);
-	}
-	SPI_SETFREQUENCY(spi3, 10 * 1000 * 1000);   // 10 MHz
-	SPI_SETBITS(spi3, 8);
-	SPI_SETMODE(spi3, SPIDEV_MODE3);
-	up_udelay(20);
+    /*─────────────────────────────────────────────
+     * SPI2 — External Flash (W25Q32 / GD25Q64)
+     *────────────────────────────────────────────*/
+    spi2 = stm32_spibus_initialize(2);
+    if (!spi2) {
+        syslog(LOG_ERR, "[boot] FAILED to initialize SPI2 (Flash)\n");
+    } else {
+        SPI_SETFREQUENCY(spi2, 12 * 1000 * 1000);
+        SPI_SETBITS(spi2, 8);
+        SPI_SETMODE(spi2, SPIDEV_MODE0);
+        SPI_SELECT(spi2, SPIDEV_FLASH(0), false);
+#ifdef CONFIG_SPI_CHARDEV
+        spi_register(2, spi2);
+#endif
+        syslog(LOG_INFO, "[boot] SPI2 initialized\n");
+    }
+
+    /*─────────────────────────────────────────────
+     * SPI3 — OSD (MAX7456) / Barometer
+     *────────────────────────────────────────────*/
+    spi3 = stm32_spibus_initialize(3);
+    if (!spi3) {
+        syslog(LOG_ERR, "[boot] FAILED to initialize SPI3 (OSD/Baro)\n");
+    } else {
+        SPI_SETFREQUENCY(spi3, 10 * 1000 * 1000);
+        SPI_SETBITS(spi3, 8);
+        SPI_SETMODE(spi3, SPIDEV_MODE0);
+#ifdef CONFIG_SPI_CHARDEV
+        spi_register(3, spi3);
+#endif
+        syslog(LOG_INFO, "[boot] SPI3 initialized\n");
+    }
 
 #if defined(FLASH_BASED_PARAMS)
-	static sector_descriptor_t params_sector_map[] = {
-		{1, 16 * 1024, 0x08008000},
-		{0, 0, 0},
-	};
+    static sector_descriptor_t params_sector_map[] = {
+        {1, 16 * 1024, 0x08008000},
+        {0, 0, 0},
+    };
 
-	/* Initialize the flashfs layer to use heap allocated memory */
-	int result = parameter_flashfs_init(params_sector_map, NULL, 0);
-
-	if (result != OK) {
-		syslog(LOG_ERR, "[boot] FAILED to init params in FLASH %d\n", result);
-		led_on(LED_AMBER);
-	}
-
+    int result = parameter_flashfs_init(params_sector_map, NULL, 0);
+    if (result != OK) {
+        syslog(LOG_ERR, "[boot] FAILED to init params in FLASH %d\n", result);
+        led_on(LED_AMBER);
+    }
 #endif
 
-	/* Configure the rest of the platform (UARTs, I2C, etc.) */
-	px4_platform_configure();
+    /* Configure the rest of the platform (UARTs, I2C, etc.) */
+    px4_platform_configure();
 
-	return OK;
+    syslog(LOG_INFO, "[boot] board_app_initialize() done\n");
+    return OK;
 }
 

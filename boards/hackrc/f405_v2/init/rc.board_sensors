@@ -3,19 +3,36 @@
 # HAKRC F405 V2 board sensors initialization
 #---------------------------------------------
 
-board_adc start
-
-# --- IMU: ICM42688 on SPI1 ---
-if ! icm42688 -R 6 -s start
+echo "[HAKRC] Initializing ADC..."
+if board_adc start
 then
-	echo "ICM42688 not detected on SPI1"
+    echo "[HAKRC]  ADC started successfully"
+else
+    echo "[HAKRC]  Failed to start ADC"
 fi
 
-# --- Barometer: BMP280 on SPI3 ---
-if ! bmp280 -s start
+echo "[HAKRC] Initializing IMU (ICM42688P)..."
+if icm42688p -R 0 -s -b 1 start
 then
-	echo "BMP280 not detected on SPI3"
+    echo "[HAKRC] IMU (ICM42688P) started successfully"
+else
+    echo "[HAKRC]  IMU (ICM42688P) failed to start"
 fi
 
-# --- OSD (optional, handled by PX4 driver) ---
-# max7456 start  # only if you need to force OSD init manually
+echo "[HAKRC] Initializing Barometer (DPS310)..."
+if dps310 -I start -a 118
+then
+    echo "[HAKRC]  Barometer (DPS310 @0x76) started successfully"
+else
+    echo "[HAKRC]  Barometer (DPS310) failed to start"
+fi
+
+echo "[HAKRC] Starting unified sensors module..."
+if sensors start
+then
+    echo "[HAKRC]  Sensors module started"
+else
+    echo "[HAKRC]  Sensors module failed to start"
+fi
+
+echo "[HAKRC] Sensor initialization complete."

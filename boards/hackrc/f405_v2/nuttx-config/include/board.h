@@ -262,7 +262,7 @@
 #define GPIO_USART6_TX GPIO_USART6_TX_1  //PC6
 
 /* SPI1:
- *  MPU6000
+ *  ICM42688p
  *  CS: PA4 -- configured in board_config.h
  *  CLK: PA5
  *  MISO: PA6
@@ -272,6 +272,7 @@
 #define GPIO_SPI1_SCK  GPIO_SPI1_SCK_1   //PA5
 #define GPIO_SPI1_MISO GPIO_SPI1_MISO_1   //PA6
 #define GPIO_SPI1_MOSI GPIO_SPI1_MOSI_1   //PA7
+#define GPIO_SPI1_NSS GPIO_SPI1_NSS_1     //PA4
 
 /* SPI2:
  *  Flash Memory
@@ -281,7 +282,7 @@
 #define GPIO_SPI2_SCK	GPIO_SPI2_SCK_2  //PB13
 #define GPIO_SPI2_MISO	GPIO_SPI2_MISO_1   //PB14
 #define GPIO_SPI2_MOSI	GPIO_SPI2_MOSI_2   //PC3
-//#define GPIO_SPI2_NSS_1 GPIO_SPI2_NSS_1    //PB12
+#define GPIO_SPI2_NSS   GPIO_SPI2_NSS_2     //PB12
 
 /* SPI3:
  *  DPS310
@@ -294,6 +295,7 @@
 #define GPIO_SPI3_SCK  GPIO_SPI3_SCK_2 //PC10
 #define GPIO_SPI3_MISO GPIO_SPI3_MISO_2 //PC11
 #define GPIO_SPI3_MOSI GPIO_SPI3_MOSI_1 //PB5
+#define GPIO_SPI3_NSS GPIO_SPI3_NSS_1  //PA15
 
 /*
  * I2C (external)

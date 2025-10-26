@@ -159,7 +159,7 @@ __EXPORT void stm32_boardinitialize(void)
 	 * Reset all PWM outputs to LOW
 	 *───────────────────────────────*/
 	board_on_reset(-1);
-
+    //board_control_spi_sensors_power_configgpio();
 	/*───────────────────────────────
 	 * LEDs
 	 *───────────────────────────────*/
@@ -204,72 +204,38 @@ __EXPORT void stm32_boardinitialize(void)
 // static struct spi_dev_s *spi1;
 // static struct spi_dev_s *spi2;
 // static struct spi_dev_s *spi3;
-
+extern int spi_register(int bus, struct spi_dev_s *dev);
 __EXPORT int board_app_initialize(uintptr_t arg)
 {
-    syslog(LOG_INFO, "[boot] board_app_initialize() start\n");
+    //PX4_INFO("[boot] board_app_initialize() start");
 
-    /*─────────────────────────────────────────────
-     * 1. Базовая инициализация платформы PX4
-     *────────────────────────────────────────────*/
     px4_platform_init();
-    stm32_spiinitialize();
-    /*─────────────────────────────────────────────
-     * 2. DMA allocator (для SPI/USART)
-     *────────────────────────────────────────────*/
+
     if (board_dma_alloc_init() < 0) {
-        syslog(LOG_ERR, "[boot] DMA allocator init FAILED\n");
+        //PX4_ERR("[boot] DMA alloc FAILED");
     }
 
-#if defined(SERIAL_HAVE_RXDMA)
-    /* RX DMA polling раз в 1 мс */
-    static struct hrt_call serial_dma_call;
-    hrt_call_every(&serial_dma_call, 1000, 1000,
-                   (hrt_callout)stm32_serial_dma_poll, NULL);
-#endif
-
-    /*─────────────────────────────────────────────
-     * 3. Светодиоды и HardFault handler
-     *────────────────────────────────────────────*/
     drv_led_start();
     led_off(LED_BLUE);
     led_off(LED_RED);
 
-    if (board_hardfault_init(2, true) != 0) {
-        syslog(LOG_ERR, "[boot] HardFault handler init FAILED\n");
-        led_on(LED_BLUE);
-    }
-
-    /*─────────────────────────────────────────────
-     * 4. Конфигурация платформы по manifest:
-     *    PX4 сам создаёт шины, SPI/MTD и устройства
-     *────────────────────────────────────────────*/
-    syslog(LOG_INFO, "[boot] Configuring platform via manifest...\n");
-    px4_platform_configure();
-
-    /*─────────────────────────────────────────────
-     * 5. Flash-based parameters (если нужно)
-     *────────────────────────────────────────────*/
 #if defined(FLASH_BASED_PARAMS)
     static sector_descriptor_t params_sector_map[] = {
-        {15, 128 * 1024, 0x08008000}, // последний сектор Flash
-        {0, 0, 0},
+        {15, 128 * 1024, 0x08020000}, // адрес последнего сектора
+        {0, 0, 0}
     };
-
     int result = parameter_flashfs_init(params_sector_map, NULL, 0);
     if (result != OK) {
-        syslog(LOG_ERR, "[boot] parameter_flashfs_init FAILED (%d)\n", result);
+        //PX4_ERR("[boot] parameter_flashfs_init failed (%d)", result);
         led_on(LED_RED);
-    } else {
-        syslog(LOG_INFO, "[boot] Flash parameters initialized OK\n");
     }
 #endif
 
-    /*─────────────────────────────────────────────
-     * 6. Готово
-     *────────────────────────────────────────────*/
-    syslog(LOG_INFO, "[boot] board_app_initialize() complete\n");
+    px4_platform_configure(); // конфигурирует шины, включая SPI
+
+    //PX4_INFO("[boot] board_app_initialize() complete");
     return OK;
 }
+
 
 

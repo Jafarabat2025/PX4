@@ -38,7 +38,6 @@
  */
 
 #pragma once
-#define BOARD_HAS_STATIC_MANIFEST 1
 /****************************************************************************************************
  * Included Files
  ****************************************************************************************************/
@@ -62,6 +61,8 @@
 #define BOARD_OVERLOAD_LED     LED_BLUE
 
 #define  FLASH_BASED_PARAMS
+#define HW_INFO_INIT_PREFIX   "V6U"
+#define V6U00                 HW_VER_REV(0x0,0x0)
 
 
 
@@ -93,12 +94,6 @@
 #define GPIO_GPIO3_OUTPUT            _MK_GPIO_OUTPUT(GPIO_TIM2_CH3OUT)
 //#define GPIO_GPIO4_OUTPUT            _MK_GPIO_OUTPUT(GPIO_TIM5_CH2OUT)
 //#define GPIO_GPIO5_OUTPUT            _MK_GPIO_OUTPUT(GPIO_TIM1_CH1OUT)
-
-/* USB OTG FS
- *
- * PA9  OTG_FS_VBUS VBUS sensing
- */
-//#define GPIO_OTGFS_VBUS		(GPIO_INPUT|GPIO_FLOAT|GPIO_SPEED_100MHz|GPIO_OPENDRAIN|GPIO_PORTC|GPIO_PIN5)
 
 /* PWM
  *

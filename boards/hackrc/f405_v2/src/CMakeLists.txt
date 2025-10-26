@@ -39,6 +39,7 @@ add_library(drivers_board
 	timer_config.cpp
 	usb.c
 	mtd.cpp
+	board_manifest.c
 )
 
 target_link_libraries(drivers_board

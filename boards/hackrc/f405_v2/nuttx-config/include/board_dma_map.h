@@ -78,8 +78,8 @@
 //      DMAMAP_TIM3_UP                        // DMA1, Stream 2, Channel 5    (DSHOT)
 #define DMACHAN_SPI2_RX    DMAMAP_SPI2_RX     // DMA1, Stream 3, Channel 0    (SPI2 RX)
 #define DMACHAN_SPI2_TX    DMAMAP_SPI2_TX     // DMA1, Stream 4, Channel 0    (SPI2 TX)
-#define DMACHAN_SPI3_RX    DMAMAP_SPI3_RX_1
-#define DMACHAN_SPI3_TX    DMAMAP_SPI3_TX_1
+// #define DMACHAN_SPI3_RX    DMAMAP_SPI3_RX_1
+// #define DMACHAN_SPI3_TX    DMAMAP_SPI3_TX_1
 //      AVAILABLE                             // DMA2, Stream 5
 //      AVAILABLE                             // DMA2, Stream 6
 //      AVAILABLE                             // DMA2, Stream 7

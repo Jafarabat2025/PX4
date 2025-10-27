@@ -43,6 +43,7 @@
  ****************************************************************************************************/
 
 #include <px4_platform_common/px4_config.h>
+//#include <px4_platform_common/board_common.h>
 #include <nuttx/compiler.h>
 #include <stdint.h>
 
@@ -60,9 +61,11 @@
 
 #define BOARD_OVERLOAD_LED     LED_BLUE
 
+//#define HW_VER_REV(v, r) (((v) << 16) | (r))
+
 #define  FLASH_BASED_PARAMS
-#define HW_INFO_INIT_PREFIX   "V6U"
-#define V6U00                 HW_VER_REV(0x0,0x0)
+// #define HW_INFO_INIT_PREFIX   "V6U"
+// #define V6U00                 HW_VER_REV(0x0,0x0)
 
 
 

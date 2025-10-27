@@ -204,36 +204,36 @@ __EXPORT void stm32_boardinitialize(void)
 // static struct spi_dev_s *spi1;
 // static struct spi_dev_s *spi2;
 // static struct spi_dev_s *spi3;
-extern int spi_register(int bus, struct spi_dev_s *dev);
 __EXPORT int board_app_initialize(uintptr_t arg)
 {
-    //PX4_INFO("[boot] board_app_initialize() start");
-
     px4_platform_init();
 
     if (board_dma_alloc_init() < 0) {
-        //PX4_ERR("[boot] DMA alloc FAILED");
+        syslog(LOG_ERR, "[boot] DMA alloc FAILED");
     }
 
+    // запускаем светодиоды, hardfault, и другие базовые сервисы…
     drv_led_start();
     led_off(LED_BLUE);
-    led_off(LED_RED);
 
-#if defined(FLASH_BASED_PARAMS)
-    static sector_descriptor_t params_sector_map[] = {
-        {15, 128 * 1024, 0x08020000}, // адрес последнего сектора
-        {0, 0, 0}
-    };
-    int result = parameter_flashfs_init(params_sector_map, NULL, 0);
-    if (result != OK) {
-        //PX4_ERR("[boot] parameter_flashfs_init failed (%d)", result);
-        led_on(LED_RED);
+    if (board_hardfault_init(2, true) != 0) {
+        led_on(LED_BLUE);
     }
-#endif
 
-    px4_platform_configure(); // конфигурирует шины, включая SPI
+    // инициализация параметров во флэше (если нужно)
+    #if defined(FLASH_BASED_PARAMS)
+    static sector_descriptor_t params_sector_map[] = {
+        {15, 128 * 1024, 0x08008000},
+        {0, 0, 0},
+    };
+    if (parameter_flashfs_init(params_sector_map, NULL, 0) != OK) {
+        syslog(LOG_ERR, "[boot] PARAM FLASH init failed");
+    }
+    #endif
 
-    //PX4_INFO("[boot] board_app_initialize() complete");
+    // конфигурируем аппаратные интерфейсы согласно манифесту
+    px4_platform_configure();
+
     return OK;
 }
 

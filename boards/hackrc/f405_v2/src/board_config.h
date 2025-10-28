@@ -67,7 +67,9 @@
 // #define HW_INFO_INIT_PREFIX   "V6U"
 // #define V6U00                 HW_VER_REV(0x0,0x0)
 
-
+#define PX4_SPI_BUS_SENSORS    1
+#define PX4_SPI_BUS_FLASH      2
+#define PX4_SPI_BUS_OSD        3
 
 /*
  * ADC channels

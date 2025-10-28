@@ -201,9 +201,9 @@ __EXPORT void stm32_boardinitialize(void)
  ****************************************************************************/
 // #define CONFIG_SPI_CHARDEV
 // extern int spi_register(int bus, FAR struct spi_dev_s *dev);
-// static struct spi_dev_s *spi1;
-// static struct spi_dev_s *spi2;
-// static struct spi_dev_s *spi3;
+static struct spi_dev_s *spi1;
+static struct spi_dev_s *spi2;
+static struct spi_dev_s *spi3;
 __EXPORT int board_app_initialize(uintptr_t arg)
 {
     px4_platform_init();
@@ -219,6 +219,54 @@ __EXPORT int board_app_initialize(uintptr_t arg)
     if (board_hardfault_init(2, true) != 0) {
         led_on(LED_BLUE);
     }
+    	// SPI1: MPU6000
+	spi1 = stm32_spibus_initialize(1);
+
+	if (!spi1) {
+		syslog(LOG_ERR, "[boot] FAILED to initialize SPI port 1\n");
+		led_on(LED_BLUE);
+	}
+
+	/* Default SPI1 to 1MHz and de-assert the known chip selects. */
+	SPI_SETFREQUENCY(spi1, 10000000);
+	SPI_SETBITS(spi1, 8);
+	SPI_SETMODE(spi1, SPIDEV_MODE3);
+	up_udelay(20);
+
+	// SPI2: SDCard
+	/* Get the SPI port for the microSD slot */
+	spi2 = stm32_spibus_initialize(2);
+
+	if (!spi2) {
+		syslog(LOG_ERR, "[boot] FAILED to initialize SPI port");
+		led_on(LED_BLUE);
+	}
+	SPI_SETFREQUENCY(spi2, 10 * 1000 * 1000);
+	SPI_SETBITS(spi2, 8);
+	SPI_SETMODE(spi2, SPIDEV_MODE3);
+	up_udelay(20);
+
+	up_udelay(20);
+
+
+	// SPI3: OSD / Baro
+	spi3 = stm32_spibus_initialize(3);
+
+	if (!spi3) {
+		syslog(LOG_ERR, "[boot] FAILED to initialize SPI port 3\n");
+		led_on(LED_BLUE);
+	}
+
+	/* Copied from fmu-v4
+	 * Default SPI3 to 12MHz and de-assert the known chip selects.
+	 * MS5611 has max SPI clock speed of 20MHz
+	 */
+
+	// BMP280 max SPI speed is 10 MHz
+	SPI_SETFREQUENCY(spi3, 10 * 1000 * 1000);
+	SPI_SETBITS(spi3, 8);
+	SPI_SETMODE(spi3, SPIDEV_MODE3);
+	up_udelay(20);
 
     // инициализация параметров во флэше (если нужно)
     #if defined(FLASH_BASED_PARAMS)

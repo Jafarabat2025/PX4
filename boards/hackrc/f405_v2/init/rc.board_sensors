@@ -12,7 +12,7 @@ else
 fi
 
 echo "[HAKRC] Initializing IMU (ICM42688P)..."
-if icm42688p start -R 14 -S -b 1
+if mpu6000 -R 6 -s start
 then
     echo "[HAKRC] IMU (ICM42688P) started successfully"
 else

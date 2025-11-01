@@ -3,7 +3,7 @@
 # board specific defaults
 #------------------------------------------------------------------------------
 param set-default SYS_AUTOSTART 4001
-param set-default SYS_AUTOCONFIG 1
+param set-default SYS_AUTOCONFIG 0
 param set-default BAT1_V_DIV 11.12
 param set-default BAT1_A_PER_V 31
 

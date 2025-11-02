@@ -272,7 +272,7 @@ __EXPORT int board_app_initialize(uintptr_t arg)
 	/* Default SPI1 to 1MHz and de-assert the known chip selects. */
 	SPI_SETFREQUENCY(spi1, 8*1000*1000);
 	SPI_SETBITS(spi1, 8);
-	SPI_SETMODE(spi1, SPIDEV_MODE0);
+	SPI_SETMODE(spi1, SPIDEV_MODE3);
 	up_udelay(20);
 
 	// SPI2: SDCard
@@ -311,7 +311,7 @@ __EXPORT int board_app_initialize(uintptr_t arg)
 	// BMP280 max SPI speed is 10 MHz
 	SPI_SETFREQUENCY(spi3, 10 * 1000 * 1000);
 	SPI_SETBITS(spi3, 8);
-	SPI_SETMODE(spi3, SPIDEV_MODE0);
+	SPI_SETMODE(spi3, SPIDEV_MODE3);
 	up_udelay(20);
 
 #if defined(FLASH_BASED_PARAMS)

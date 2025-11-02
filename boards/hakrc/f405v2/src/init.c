@@ -98,8 +98,6 @@ extern void led_on(int led);
 extern void led_off(int led);
 __END_DECLS
 
-int mmcsd_slotinitialize(int minor, FAR struct sdio_dev_s *dev);
-
 /****************************************************************************
  * Protected Functions
  ****************************************************************************/
@@ -233,7 +231,7 @@ stm32_boardinitialize(void)
  ****************************************************************************/
 
 static struct spi_dev_s *spi1;
-static struct spi_dev_s *spi2;
+// static struct spi_dev_s *spi2;
 static struct spi_dev_s *spi3;
 
 __EXPORT int board_app_initialize(uintptr_t arg)
@@ -272,29 +270,29 @@ __EXPORT int board_app_initialize(uintptr_t arg)
 	}
 
 	/* Default SPI1 to 1MHz and de-assert the known chip selects. */
-	SPI_SETFREQUENCY(spi1, 10000000);
+	SPI_SETFREQUENCY(spi1, 8*1000*1000);
 	SPI_SETBITS(spi1, 8);
-	SPI_SETMODE(spi1, SPIDEV_MODE3);
+	SPI_SETMODE(spi1, SPIDEV_MODE0);
 	up_udelay(20);
 
 	// SPI2: SDCard
 	/* Get the SPI port for the microSD slot */
-	spi2 = stm32_spibus_initialize(2);
+	// spi2 = stm32_spibus_initialize(CONFIG_NSH_MMCSDSPIPORTNO);
 
-	if (!spi2) {
-		syslog(LOG_ERR, "[boot] FAILED to initialize SPI port %d\n", 2);
-		led_on(LED_BLUE);
-	}
+	// if (!spi2) {
+	// 	syslog(LOG_ERR, "[boot] FAILED to initialize SPI port %d\n", CONFIG_NSH_MMCSDSPIPORTNO);
+	// 	led_on(LED_BLUE);
+	// }
 
-	/* Now bind the SPI interface to the MMCSD driver */
-	int result = mmcsd_spislotinitialize(0, 2, spi2);
+	// /* Now bind the SPI interface to the MMCSD driver */
+	// int result = mmcsd_spislotinitialize(CONFIG_NSH_MMCSDMINOR, CONFIG_NSH_MMCSDSLOTNO, spi2);
 
-	if (result != OK) {
-		led_on(LED_BLUE);
-		syslog(LOG_ERR, "[boot] FAILED to bind SPI port 2 to the MMCSD driver\n");
-	}
+	// if (result != OK) {
+	// 	led_on(LED_BLUE);
+	// 	syslog(LOG_ERR, "[boot] FAILED to bind SPI port 2 to the MMCSD driver\n");
+	// }
 
-	up_udelay(20);
+	// up_udelay(20);
 
 
 	// SPI3: OSD / Baro
@@ -313,7 +311,7 @@ __EXPORT int board_app_initialize(uintptr_t arg)
 	// BMP280 max SPI speed is 10 MHz
 	SPI_SETFREQUENCY(spi3, 10 * 1000 * 1000);
 	SPI_SETBITS(spi3, 8);
-	SPI_SETMODE(spi3, SPIDEV_MODE3);
+	SPI_SETMODE(spi3, SPIDEV_MODE0);
 	up_udelay(20);
 
 #if defined(FLASH_BASED_PARAMS)
@@ -323,7 +321,7 @@ __EXPORT int board_app_initialize(uintptr_t arg)
 	};
 
 	/* Initialize the flashfs layer to use heap allocated memory */
-	result = parameter_flashfs_init(params_sector_map, NULL, 0);
+	int result = parameter_flashfs_init(params_sector_map, NULL, 0);
 
 	if (result != OK) {
 		syslog(LOG_ERR, "[boot] FAILED to init params in FLASH %d\n", result);

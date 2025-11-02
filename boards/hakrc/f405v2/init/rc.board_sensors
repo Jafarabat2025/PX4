@@ -5,10 +5,6 @@
 
 board_adc start
 
-if ! mpu6000 -R 6 -s start
-then
-	# some boards such as the Hobbywing XRotor F4 G2 use the ICM-20602
-	if ! icm42688p -s -R 6 start
-fi
-
 dps310 -I start -a 118
+
+icm42688p -s -b 1 -R 14 start

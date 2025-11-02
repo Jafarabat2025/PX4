@@ -38,12 +38,12 @@
  */
 
 #pragma once
+
 /****************************************************************************************************
  * Included Files
  ****************************************************************************************************/
 
 #include <px4_platform_common/px4_config.h>
-//#include <px4_platform_common/board_common.h>
 #include <nuttx/compiler.h>
 #include <stdint.h>
 
@@ -52,24 +52,18 @@
  ****************************************************************************************************/
 /* Configuration ************************************************************************************/
 
-/* HACKRCF405V2 GPIOs ***********************************************************************************/
+/* omnibusf4sd GPIOs ***********************************************************************************/
 /* LEDs */
-// power - red
-// LED1 - PC15 - blue
+// power - green
+// LED1 - PB5 - blue
 #define GPIO_LED1       (GPIO_OUTPUT|GPIO_PUSHPULL|GPIO_SPEED_50MHz|GPIO_OUTPUT_CLEAR|GPIO_PORTC|GPIO_PIN15)
+//#define GPIO_LED2       (GPIO_OUTPUT|GPIO_PUSHPULL|GPIO_SPEED_50MHz|GPIO_OUTPUT_CLEAR|GPIO_PORTC|GPIO_PIN14)
 #define GPIO_LED_BLUE   GPIO_LED1
+//#define GPIO_LED_GREEN  GPIO_LED2
 
 #define BOARD_OVERLOAD_LED     LED_BLUE
 
-//#define HW_VER_REV(v, r) (((v) << 16) | (r))
-
 #define  FLASH_BASED_PARAMS
-// #define HW_INFO_INIT_PREFIX   "V6U"
-// #define V6U00                 HW_VER_REV(0x0,0x0)
-
-#define PX4_SPI_BUS_SENSORS    1
-#define PX4_SPI_BUS_FLASH      2
-#define PX4_SPI_BUS_OSD        3
 
 /*
  * ADC channels
@@ -78,9 +72,20 @@
  */
 #define ADC_CHANNELS (1 << 0) | (1 << 11) | (1 << 12)
 
-#define ADC_BATTERY_VOLTAGE_CHANNEL  11
-#define ADC_BATTERY_CURRENT_CHANNEL  13
-#define ADC_RC_RSSI_CHANNEL          0
+#define ADC_BATTERY_VOLTAGE_CHANNEL  10
+#define ADC_BATTERY_CURRENT_CHANNEL  11
+#define ADC_RC_RSSI_CHANNEL          12
+
+/* User GPIOs
+ *
+ * GPIO0-5 are the PWM servo outputs.
+ * GPIO_TIM3_CH3OUT        GPIO_TIM3_CH3OUT_1 //PB0 S1_OUT D1_ST7
+ * GPIO_TIM3_CH4OUT        GPIO_TIM3_CH4OUT_1 //PB1 S2_OUT D1_ST2
+ * GPIO_TIM2_CH4OUT        GPIO_TIM2_CH4OUT_1 //PA3 S3_OUT D1_ST6
+ * GPIO_TIM2_CH3OUT        GPIO_TIM2_CH3OUT_1 //PA2 S4_OUT D1_ST1
+ * GPIO_TIM5_CH2OUT        GPIO_TIM5_CH2OUT_1 //PA1 S5_OUT
+ * GPIO_TIM1_CH1OUT        GPIO_TIM1_CH1OUT_1 //PA8 S6_OUT
+ */
 
 #define _MK_GPIO_INPUT(def) (((def) & (GPIO_PORT_MASK | GPIO_PIN_MASK)) | (GPIO_INPUT|GPIO_PULLUP))
 
@@ -110,8 +115,8 @@
 #define HRT_TIMER                    4 // T4C1
 #define HRT_TIMER_CHANNEL            1 // use capture/compare channel 1
 
-//#define HRT_PPM_CHANNEL              3 // capture/compare channel 3
-//#define GPIO_PPM_IN                  (GPIO_ALT|GPIO_AF2|GPIO_PULLUP|GPIO_PORTB|GPIO_PIN8)
+// #define HRT_PPM_CHANNEL              3 // capture/compare channel 3
+// #define GPIO_PPM_IN                  (GPIO_ALT|GPIO_AF2|GPIO_PULLUP|GPIO_PORTB|GPIO_PIN8)
 
 #define RC_SERIAL_PORT               "/dev/ttyS0"
 #define BOARD_SUPPORTS_RC_SERIAL_PORT_OUTPUT

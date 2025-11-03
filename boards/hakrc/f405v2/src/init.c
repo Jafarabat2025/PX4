@@ -76,6 +76,8 @@
 #include <px4_arch/io_timer.h>
 #include <px4_platform_common/init.h>
 #include <px4_platform/board_dma_alloc.h>
+// #include <nuttx/spi/spi.h>
+// #include <nuttx/mtd/mtd.h>
 
 # if defined(FLASH_BASED_PARAMS)
 #  include <parameters/flashparams/flashfs.h>
@@ -231,8 +233,9 @@ stm32_boardinitialize(void)
  ****************************************************************************/
 
 static struct spi_dev_s *spi1;
-// static struct spi_dev_s *spi2;
+static struct spi_dev_s *spi2;
 static struct spi_dev_s *spi3;
+// static struct mtd_dev_s *mtd;
 
 __EXPORT int board_app_initialize(uintptr_t arg)
 {
@@ -277,25 +280,26 @@ __EXPORT int board_app_initialize(uintptr_t arg)
 
 	// SPI2: SDCard
 	/* Get the SPI port for the microSD slot */
-	// spi2 = stm32_spibus_initialize(CONFIG_NSH_MMCSDSPIPORTNO);
+	spi2 = stm32_spibus_initialize(2);
 
-	// if (!spi2) {
-	// 	syslog(LOG_ERR, "[boot] FAILED to initialize SPI port %d\n", CONFIG_NSH_MMCSDSPIPORTNO);
-	// 	led_on(LED_BLUE);
-	// }
+	if (!spi2) {
+		syslog(LOG_ERR, "[boot] FAILED to initialize SPI port 3\n");
+		led_on(LED_BLUE);
+	}
 
-	// /* Now bind the SPI interface to the MMCSD driver */
-	// int result = mmcsd_spislotinitialize(CONFIG_NSH_MMCSDMINOR, CONFIG_NSH_MMCSDSLOTNO, spi2);
+	/* Copied from fmu-v4
+	 * Default SPI3 to 12MHz and de-assert the known chip selects.
+	 * MS5611 has max SPI clock speed of 20MHz
+	 */
 
-	// if (result != OK) {
-	// 	led_on(LED_BLUE);
-	// 	syslog(LOG_ERR, "[boot] FAILED to bind SPI port 2 to the MMCSD driver\n");
-	// }
+	// BMP280 max SPI speed is 10 MHz
+	SPI_SETFREQUENCY(spi2, 10 * 1000 * 1000);
+	SPI_SETBITS(spi2, 8);
+	SPI_SETMODE(spi2, SPIDEV_MODE0);
+	up_udelay(20);
 
-	// up_udelay(20);
 
-
-	// SPI3: OSD / Baro
+	// SPI3: flash
 	spi3 = stm32_spibus_initialize(3);
 
 	if (!spi3) {

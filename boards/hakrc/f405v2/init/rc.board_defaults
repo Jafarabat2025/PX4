@@ -2,12 +2,18 @@
 #
 # board specific defaults
 #------------------------------------------------------------------------------
-param set-default SYS_AUTOSTART 4001
+param set SYS_AUTOSTART 4001
+param set SYS_AUTOCONFIG 0
+param set SYS_HAS_MAG 0
+param set COM_ARM_SDCARD 0
+param set SDLOG_BACKEND 0
 
-param set-default BAT1_V_DIV 11.12
-param set-default BAT1_A_PER_V 31
+param set OSD_ATXXXX_CFG 1
+
+param set BAT1_V_DIV 11.12
+param set BAT1_A_PER_V 31
 
 # system_power unavailable
-param set-default CBRK_SUPPLY_CHK 894281
+param set CBRK_SUPPLY_CHK 894281
 
-param set-default SYS_HAS_MAG 0
+
